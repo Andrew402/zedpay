@@ -1,0 +1,16 @@
+$kind: http-request
+name: http://localhost:7070/users/register
+url: http://localhost:7070/users/register
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \  \"fullName\": \"John Banda\",\r
+
+    \  \"phoneNumber\": \"0967654321\",\r
+
+    \  \"nationalId\": \"876543/21/1\"\r
+
+    }"
+order: 463337912819398
