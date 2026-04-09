@@ -32,126 +32,300 @@ public class ZedPayApp {
         app.get("/", ctx -> ctx.result("ZedPay API is running"));
 
         app.post("/users/register", ctx -> {
-            Map<String, Object> body = gson.fromJson(ctx.body(), Map.class);
+            try {
+                Map<String, Object> body = gson.fromJson(ctx.body(), Map.class);
 
-            String fullName = (String) body.get("fullName");
-            String phoneNumber = (String) body.get("phoneNumber");
-            String nationalId = (String) body.get("nationalId");
+                if (body == null) {
+                    ctx.status(400).json(Map.of("message", "Request body is required"));
+                    return;
+                }
 
-            User user = userService.registerUser(fullName, phoneNumber, nationalId);
-            ctx.status(201).json(user);
+                String fullName = body.get("fullName") == null ? null : body.get("fullName").toString().trim();
+                String phoneNumber = body.get("phoneNumber") == null ? null : body.get("phoneNumber").toString().trim();
+                String nationalId = body.get("nationalId") == null ? null : body.get("nationalId").toString().trim();
+
+                if (fullName == null || fullName.isEmpty()) {
+                    ctx.status(400).json(Map.of("message", "Full name is required"));
+                    return;
+                }
+
+                if (phoneNumber == null || phoneNumber.isEmpty()) {
+                    ctx.status(400).json(Map.of("message", "Phone number is required"));
+                    return;
+                }
+
+                if (nationalId == null || nationalId.isEmpty()) {
+                    ctx.status(400).json(Map.of("message", "National ID is required"));
+                    return;
+                }
+
+                User user = userService.registerUser(fullName, phoneNumber, nationalId);
+                ctx.status(201).json(user);
+
+            } catch (Exception e) {
+                ctx.status(500).json(Map.of("message", "Failed to register user"));
+            }
         });
 
         app.get("/users/{id}", ctx -> {
-            String id = ctx.pathParam("id");
-            User user = userService.getUserById(id);
+            try {
+                String id = ctx.pathParam("id");
 
-            if (user == null) {
-                ctx.status(404).json(Map.of("message", "User not found"));
-                return;
+                if (id == null || id.trim().isEmpty()) {
+                    ctx.status(400).json(Map.of("message", "User ID is required"));
+                    return;
+                }
+
+                User user = userService.getUserById(id);
+
+                if (user == null) {
+                    ctx.status(404).json(Map.of("message", "User not found"));
+                    return;
+                }
+
+                ctx.json(user);
+
+            } catch (Exception e) {
+                ctx.status(500).json(Map.of("message", "Failed to fetch user"));
             }
-
-            ctx.json(user);
         });
 
         app.post("/accounts/create", ctx -> {
-            Map<String, Object> body = gson.fromJson(ctx.body(), Map.class);
+            try {
+                Map<String, Object> body = gson.fromJson(ctx.body(), Map.class);
 
-            String userId = (String) body.get("userId");
-            String accountType = (String) body.get("accountType");
-            String businessRegistrationId = body.get("businessRegistrationId") == null ? null : (String) body.get("businessRegistrationId");
+                if (body == null) {
+                    ctx.status(400).json(Map.of("message", "Request body is required"));
+                    return;
+                }
 
-            double minimumBalance = 0.0;
-            if (body.get("minimumBalance") != null) {
-                minimumBalance = ((Number) body.get("minimumBalance")).doubleValue();
+                String userId = body.get("userId") == null ? null : body.get("userId").toString().trim();
+                String accountType = body.get("accountType") == null ? null : body.get("accountType").toString().trim();
+                String businessRegistrationId = body.get("businessRegistrationId") == null
+                        ? null : body.get("businessRegistrationId").toString().trim();
+
+                double minimumBalance = 0.0;
+                if (body.get("minimumBalance") != null) {
+                    minimumBalance = ((Number) body.get("minimumBalance")).doubleValue();
+                }
+
+                if (userId == null || userId.isEmpty()) {
+                    ctx.status(400).json(Map.of("message", "User ID is required"));
+                    return;
+                }
+
+                if (accountType == null || accountType.isEmpty()) {
+                    ctx.status(400).json(Map.of("message", "Account type is required"));
+                    return;
+                }
+
+                if (minimumBalance < 0) {
+                    ctx.status(400).json(Map.of("message", "Minimum balance cannot be negative"));
+                    return;
+                }
+
+                Account account = accountService.createAccount(userId, accountType, businessRegistrationId, minimumBalance);
+
+                if (account == null) {
+                    ctx.status(404).json(Map.of("message", "User not found or account creation failed"));
+                    return;
+                }
+
+                ctx.status(201).json(account);
+
+            } catch (IllegalArgumentException e) {
+                ctx.status(400).json(Map.of("message", e.getMessage()));
+            } catch (Exception e) {
+                ctx.status(500).json(Map.of("message", "Failed to create account"));
             }
-
-            Account account = accountService.createAccount(userId, accountType, businessRegistrationId, minimumBalance);
-
-            if (account == null) {
-                ctx.status(404).json(Map.of("message", "User not found"));
-                return;
-            }
-
-            ctx.status(201).json(account);
         });
 
         app.post("/transactions/topup", ctx -> {
-            Map<String, Object> body = gson.fromJson(ctx.body(), Map.class);
+            try {
+                Map<String, Object> body = gson.fromJson(ctx.body(), Map.class);
 
-            String accountId = (String) body.get("accountId");
-            double amount = ((Number) body.get("amount")).doubleValue();
+                if (body == null) {
+                    ctx.status(400).json(Map.of("message", "Request body is required"));
+                    return;
+                }
 
-            Object transaction = transactionService.topUp(accountId, amount);
+                String accountId = body.get("accountId") == null ? null : body.get("accountId").toString().trim();
 
-            if (transaction == null) {
-                ctx.status(400).json(Map.of("message", "Top up failed"));
-                return;
+                if (accountId == null || accountId.isEmpty()) {
+                    ctx.status(400).json(Map.of("message", "Account ID is required"));
+                    return;
+                }
+
+                if (body.get("amount") == null) {
+                    ctx.status(400).json(Map.of("message", "Amount is required"));
+                    return;
+                }
+
+                double amount = ((Number) body.get("amount")).doubleValue();
+
+                if (amount <= 0) {
+                    ctx.status(400).json(Map.of("message", "Amount must be greater than zero"));
+                    return;
+                }
+
+                Object transaction = transactionService.topUp(accountId, amount);
+
+                if (transaction == null) {
+                    ctx.status(400).json(Map.of("message", "Top up failed"));
+                    return;
+                }
+
+                ctx.status(201).json(transaction);
+
+            } catch (Exception e) {
+                ctx.status(500).json(Map.of("message", "Failed to process top up"));
             }
-
-            ctx.status(201).json(transaction);
         });
 
         app.post("/transactions/withdraw", ctx -> {
-            Map<String, Object> body = gson.fromJson(ctx.body(), Map.class);
+            try {
+                Map<String, Object> body = gson.fromJson(ctx.body(), Map.class);
 
-            String accountId = (String) body.get("accountId");
-            double amount = ((Number) body.get("amount")).doubleValue();
+                if (body == null) {
+                    ctx.status(400).json(Map.of("message", "Request body is required"));
+                    return;
+                }
 
-            Object transaction = transactionService.withdraw(accountId, amount);
+                String accountId = body.get("accountId") == null ? null : body.get("accountId").toString().trim();
 
-            if (transaction == null) {
-                ctx.status(400).json(Map.of("message", "Withdraw failed"));
-                return;
+                if (accountId == null || accountId.isEmpty()) {
+                    ctx.status(400).json(Map.of("message", "Account ID is required"));
+                    return;
+                }
+
+                if (body.get("amount") == null) {
+                    ctx.status(400).json(Map.of("message", "Amount is required"));
+                    return;
+                }
+
+                double amount = ((Number) body.get("amount")).doubleValue();
+
+                if (amount <= 0) {
+                    ctx.status(400).json(Map.of("message", "Amount must be greater than zero"));
+                    return;
+                }
+
+                Object transaction = transactionService.withdraw(accountId, amount);
+
+                if (transaction == null) {
+                    ctx.status(400).json(Map.of("message", "Withdraw failed or insufficient balance"));
+                    return;
+                }
+
+                ctx.status(201).json(transaction);
+
+            } catch (Exception e) {
+                ctx.status(500).json(Map.of("message", "Failed to process withdrawal"));
             }
-
-            ctx.status(201).json(transaction);
         });
 
         app.post("/transactions/send", ctx -> {
-            Map<String, Object> body = gson.fromJson(ctx.body(), Map.class);
+            try {
+                Map<String, Object> body = gson.fromJson(ctx.body(), Map.class);
 
-            String fromAccountId = (String) body.get("fromAccountId");
-            String toAccountId = (String) body.get("toAccountId");
-            double amount = ((Number) body.get("amount")).doubleValue();
+                if (body == null) {
+                    ctx.status(400).json(Map.of("message", "Request body is required"));
+                    return;
+                }
 
-            boolean merchantPayment = false;
-            if (body.get("merchantPayment") != null) {
-                merchantPayment = (Boolean) body.get("merchantPayment");
+                String fromAccountId = body.get("fromAccountId") == null ? null : body.get("fromAccountId").toString().trim();
+                String toAccountId = body.get("toAccountId") == null ? null : body.get("toAccountId").toString().trim();
+
+                if (fromAccountId == null || fromAccountId.isEmpty()) {
+                    ctx.status(400).json(Map.of("message", "Sender account ID is required"));
+                    return;
+                }
+
+                if (toAccountId == null || toAccountId.isEmpty()) {
+                    ctx.status(400).json(Map.of("message", "Receiver account ID is required"));
+                    return;
+                }
+
+                if (fromAccountId.equals(toAccountId)) {
+                    ctx.status(400).json(Map.of("message", "Cannot send money to the same account"));
+                    return;
+                }
+
+                if (body.get("amount") == null) {
+                    ctx.status(400).json(Map.of("message", "Amount is required"));
+                    return;
+                }
+
+                double amount = ((Number) body.get("amount")).doubleValue();
+
+                if (amount <= 0) {
+                    ctx.status(400).json(Map.of("message", "Amount must be greater than zero"));
+                    return;
+                }
+
+                boolean merchantPayment = false;
+                if (body.get("merchantPayment") != null) {
+                    merchantPayment = (Boolean) body.get("merchantPayment");
+                }
+
+                Object transaction = transactionService.sendMoney(fromAccountId, toAccountId, amount, merchantPayment);
+
+                if (transaction == null) {
+                    ctx.status(400).json(Map.of("message", "Send money failed"));
+                    return;
+                }
+
+                ctx.status(201).json(transaction);
+
+            } catch (Exception e) {
+                ctx.status(500).json(Map.of("message", "Failed to process send money"));
             }
-
-            Object transaction = transactionService.sendMoney(fromAccountId, toAccountId, amount, merchantPayment);
-
-            if (transaction == null) {
-                ctx.status(400).json(Map.of("message", "Send money failed"));
-                return;
-            }
-
-            ctx.status(201).json(transaction);
         });
 
         app.get("/accounts/{id}/statement", ctx -> {
-            String accountId = ctx.pathParam("id");
-            String statement = accountService.getStatement(accountId);
+            try {
+                String accountId = ctx.pathParam("id");
 
-            if (statement == null) {
-                ctx.status(404).json(Map.of("message", "Account not found"));
-                return;
+                if (accountId == null || accountId.trim().isEmpty()) {
+                    ctx.status(400).json(Map.of("message", "Account ID is required"));
+                    return;
+                }
+
+                String statement = accountService.getStatement(accountId);
+
+                if (statement == null) {
+                    ctx.status(404).json(Map.of("message", "Account not found"));
+                    return;
+                }
+
+                ctx.json(Map.of("statement", statement));
+
+            } catch (Exception e) {
+                ctx.status(500).json(Map.of("message", "Failed to fetch statement"));
             }
-
-            ctx.json(Map.of("statement", statement));
         });
 
         app.get("/accounts/{id}/history", ctx -> {
-            String accountId = ctx.pathParam("id");
-            Account account = accountService.getAccountById(accountId);
+            try {
+                String accountId = ctx.pathParam("id");
 
-            if (account == null) {
-                ctx.status(404).json(Map.of("message", "Account not found"));
-                return;
+                if (accountId == null || accountId.trim().isEmpty()) {
+                    ctx.status(400).json(Map.of("message", "Account ID is required"));
+                    return;
+                }
+
+                Account account = accountService.getAccountById(accountId);
+
+                if (account == null) {
+                    ctx.status(404).json(Map.of("message", "Account not found"));
+                    return;
+                }
+
+                ctx.json(account.getTransactionHistory());
+
+            } catch (Exception e) {
+                ctx.status(500).json(Map.of("message", "Failed to fetch transaction history"));
             }
-
-            ctx.json(account.getTransactionHistory());
         });
     }
 }
