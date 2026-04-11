@@ -117,6 +117,35 @@ public class AccountRepository {
         return accounts;
     }
 
+    public Collection<Account> findByOwnerId(String ownerId) {
+        List<Account> accounts = new ArrayList<>();
+
+        if (ownerId == null || ownerId.trim().isEmpty()) {
+            return accounts;
+        }
+
+        String sql = "SELECT * FROM accounts WHERE owner_id = ?";
+
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, ownerId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Account account = mapAccount(rs);
+                    loadTransactionHistory(conn, account);
+                    accounts.add(account);
+                }
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to load user accounts: " + e.getMessage(), e);
+        }
+
+        return accounts;
+    }
+
     private Account mapAccount(ResultSet rs) throws SQLException {
         String id = rs.getString("id");
         String accountNumber = rs.getString("account_number");
