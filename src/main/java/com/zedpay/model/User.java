@@ -23,7 +23,9 @@ public class User {
     }
 
     public void addAccount(Account account) {
-        accounts.add(account);
+        if (account != null) {
+            accounts.add(account);
+        }
     }
 
     public String getId() {
@@ -31,7 +33,9 @@ public class User {
     }
 
     public void setId(String id) {
-        this.id = id;
+        if (id != null && !id.trim().isEmpty()) {
+            this.id = id.trim();
+        }
     }
 
     public String getFullName() {
@@ -39,7 +43,9 @@ public class User {
     }
 
     public void setFullName(String fullName) {
-        this.fullName = fullName;
+        if (fullName != null && !fullName.trim().isEmpty()) {
+            this.fullName = fullName.trim();
+        }
     }
 
     public String getPhoneNumber() {
@@ -47,7 +53,9 @@ public class User {
     }
 
     public void setPhoneNumber(String phoneNumber) {
-        this.phoneNumber = phoneNumber;
+        if (phoneNumber != null && !phoneNumber.trim().isEmpty()) {
+            this.phoneNumber = phoneNumber.trim();
+        }
     }
 
     public String getNationalId() {
@@ -55,7 +63,9 @@ public class User {
     }
 
     public void setNationalId(String nationalId) {
-        this.nationalId = nationalId;
+        if (nationalId != null && !nationalId.trim().isEmpty()) {
+            this.nationalId = nationalId.trim();
+        }
     }
 
     public List<Account> getAccounts() {
@@ -63,6 +73,10 @@ public class User {
     }
 
     public void setAccounts(List<Account> accounts) {
-        this.accounts = accounts;
+        if (accounts != null) {
+            this.accounts = accounts;
+        } else {
+            this.accounts = new ArrayList<>();
+        }
     }
 }

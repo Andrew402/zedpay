@@ -17,8 +17,25 @@ public class UserService {
     }
 
     public User registerUser(String fullName, String phoneNumber, String nationalId) {
+        if (fullName == null || fullName.trim().isEmpty()) {
+            throw new IllegalArgumentException("Full name is required");
+        }
+
+        if (phoneNumber == null || phoneNumber.trim().isEmpty()) {
+            throw new IllegalArgumentException("Phone number is required");
+        }
+
+        if (nationalId == null || nationalId.trim().isEmpty()) {
+            throw new IllegalArgumentException("National ID is required");
+        }
+
         String userId = UUID.randomUUID().toString();
-        User user = new User(userId, fullName, phoneNumber, nationalId);
+        User user = new User(
+                userId,
+                fullName.trim(),
+                phoneNumber.trim(),
+                nationalId.trim()
+        );
 
         String accountId = UUID.randomUUID().toString();
         StandardAccount defaultAccount = new StandardAccount(
@@ -37,6 +54,10 @@ public class UserService {
     }
 
     public User getUserById(String id) {
+        if (id == null || id.trim().isEmpty()) {
+            throw new IllegalArgumentException("User ID is required");
+        }
+
         return userRepository.findById(id);
     }
 }

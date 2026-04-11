@@ -1,6 +1,7 @@
 package com.zedpay.api;
 
 import com.google.gson.Gson;
+import com.zedpay.database.DatabaseManager;
 import com.zedpay.model.Account;
 import com.zedpay.model.User;
 import com.zedpay.repository.AccountRepository;
@@ -14,6 +15,8 @@ import java.util.Map;
 
 public class ZedPayApp {
     public static void main(String[] args) {
+        DatabaseManager.initializeDatabase();
+
         UserRepository userRepository = new UserRepository();
         AccountRepository accountRepository = new AccountRepository();
 
@@ -62,8 +65,11 @@ public class ZedPayApp {
                 User user = userService.registerUser(fullName, phoneNumber, nationalId);
                 ctx.status(201).json(user);
 
+            } catch (IllegalArgumentException e) {
+                ctx.status(400).json(Map.of("message", e.getMessage()));
             } catch (Exception e) {
-                ctx.status(500).json(Map.of("message", "Failed to register user"));
+                e.printStackTrace();
+                ctx.status(500).json(Map.of("message", e.getClass().getSimpleName() + ": " + e.getMessage()));
             }
         });
 
@@ -85,8 +91,11 @@ public class ZedPayApp {
 
                 ctx.json(user);
 
+            } catch (IllegalArgumentException e) {
+                ctx.status(400).json(Map.of("message", e.getMessage()));
             } catch (Exception e) {
-                ctx.status(500).json(Map.of("message", "Failed to fetch user"));
+                e.printStackTrace();
+                ctx.status(500).json(Map.of("message", e.getClass().getSimpleName() + ": " + e.getMessage()));
             }
         });
 
@@ -136,7 +145,8 @@ public class ZedPayApp {
             } catch (IllegalArgumentException e) {
                 ctx.status(400).json(Map.of("message", e.getMessage()));
             } catch (Exception e) {
-                ctx.status(500).json(Map.of("message", "Failed to create account"));
+                e.printStackTrace();
+                ctx.status(500).json(Map.of("message", e.getClass().getSimpleName() + ": " + e.getMessage()));
             }
         });
 
@@ -169,16 +179,13 @@ public class ZedPayApp {
                 }
 
                 Object transaction = transactionService.topUp(accountId, amount);
-
-                if (transaction == null) {
-                    ctx.status(400).json(Map.of("message", "Top up failed"));
-                    return;
-                }
-
                 ctx.status(201).json(transaction);
 
+            } catch (IllegalArgumentException e) {
+                ctx.status(400).json(Map.of("message", e.getMessage()));
             } catch (Exception e) {
-                ctx.status(500).json(Map.of("message", "Failed to process top up"));
+                e.printStackTrace();
+                ctx.status(500).json(Map.of("message", e.getClass().getSimpleName() + ": " + e.getMessage()));
             }
         });
 
@@ -211,16 +218,13 @@ public class ZedPayApp {
                 }
 
                 Object transaction = transactionService.withdraw(accountId, amount);
-
-                if (transaction == null) {
-                    ctx.status(400).json(Map.of("message", "Withdraw failed or insufficient balance"));
-                    return;
-                }
-
                 ctx.status(201).json(transaction);
 
+            } catch (IllegalArgumentException e) {
+                ctx.status(400).json(Map.of("message", e.getMessage()));
             } catch (Exception e) {
-                ctx.status(500).json(Map.of("message", "Failed to process withdrawal"));
+                e.printStackTrace();
+                ctx.status(500).json(Map.of("message", e.getClass().getSimpleName() + ": " + e.getMessage()));
             }
         });
 
@@ -269,16 +273,13 @@ public class ZedPayApp {
                 }
 
                 Object transaction = transactionService.sendMoney(fromAccountId, toAccountId, amount, merchantPayment);
-
-                if (transaction == null) {
-                    ctx.status(400).json(Map.of("message", "Send money failed"));
-                    return;
-                }
-
                 ctx.status(201).json(transaction);
 
+            } catch (IllegalArgumentException e) {
+                ctx.status(400).json(Map.of("message", e.getMessage()));
             } catch (Exception e) {
-                ctx.status(500).json(Map.of("message", "Failed to process send money"));
+                e.printStackTrace();
+                ctx.status(500).json(Map.of("message", e.getClass().getSimpleName() + ": " + e.getMessage()));
             }
         });
 
@@ -300,8 +301,11 @@ public class ZedPayApp {
 
                 ctx.json(Map.of("statement", statement));
 
+            } catch (IllegalArgumentException e) {
+                ctx.status(400).json(Map.of("message", e.getMessage()));
             } catch (Exception e) {
-                ctx.status(500).json(Map.of("message", "Failed to fetch statement"));
+                e.printStackTrace();
+                ctx.status(500).json(Map.of("message", e.getClass().getSimpleName() + ": " + e.getMessage()));
             }
         });
 
@@ -323,8 +327,11 @@ public class ZedPayApp {
 
                 ctx.json(account.getTransactionHistory());
 
+            } catch (IllegalArgumentException e) {
+                ctx.status(400).json(Map.of("message", e.getMessage()));
             } catch (Exception e) {
-                ctx.status(500).json(Map.of("message", "Failed to fetch transaction history"));
+                e.printStackTrace();
+                ctx.status(500).json(Map.of("message", e.getClass().getSimpleName() + ": " + e.getMessage()));
             }
         });
     }

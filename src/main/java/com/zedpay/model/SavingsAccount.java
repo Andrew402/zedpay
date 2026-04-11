@@ -6,19 +6,27 @@ public class SavingsAccount extends Account {
     public SavingsAccount() {
         super();
         setAccountType(AccountType.SAVINGS);
+        this.minimumBalance = 0.0;
     }
 
     public SavingsAccount(String id, String accountNumber, double balance, String ownerId, double minimumBalance) {
         super(id, accountNumber, balance, ownerId, AccountType.SAVINGS);
-        this.minimumBalance = minimumBalance;
+        this.minimumBalance = Math.max(0.0, minimumBalance);
     }
 
     @Override
     public boolean withdraw(double amount) {
-        if (amount > 0 && (getBalance() - amount) >= minimumBalance) {
-            setBalance(getBalance() - amount);
+        if (amount <= 0) {
+            return false;
+        }
+
+        double remainingBalance = getBalance() - amount;
+
+        if (remainingBalance >= minimumBalance) {
+            setBalance(remainingBalance);
             return true;
         }
+
         return false;
     }
 
@@ -33,6 +41,8 @@ public class SavingsAccount extends Account {
     }
 
     public void setMinimumBalance(double minimumBalance) {
-        this.minimumBalance = minimumBalance;
+        if (minimumBalance >= 0) {
+            this.minimumBalance = minimumBalance;
+        }
     }
 }

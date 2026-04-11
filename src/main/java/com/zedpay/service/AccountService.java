@@ -1,6 +1,10 @@
 package com.zedpay.service;
 
-import com.zedpay.model.*;
+import com.zedpay.model.Account;
+import com.zedpay.model.MerchantAccount;
+import com.zedpay.model.SavingsAccount;
+import com.zedpay.model.StandardAccount;
+import com.zedpay.model.User;
 import com.zedpay.repository.AccountRepository;
 import com.zedpay.repository.UserRepository;
 
@@ -77,6 +81,8 @@ public class AccountService {
         }
 
         user.addAccount(account);
+
+        userRepository.save(user);
         accountRepository.save(account);
 
         return account;
@@ -96,6 +102,7 @@ public class AccountService {
         }
 
         Account account = accountRepository.findById(accountId);
+
         if (account == null) {
             return null;
         }
