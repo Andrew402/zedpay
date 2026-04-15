@@ -23,12 +23,14 @@ public class UserRepository {
         }
 
         String sql = """
-                INSERT INTO users (id, full_name, phone_number, national_id)
-                VALUES (?, ?, ?, ?)
+                INSERT INTO users (id, full_name, phone_number, national_id, email, password)
+                VALUES (?, ?, ?, ?, ?, ?)
                 ON CONFLICT(id) DO UPDATE SET
                     full_name = excluded.full_name,
                     phone_number = excluded.phone_number,
-                    national_id = excluded.national_id
+                    national_id = excluded.national_id,
+                    email = excluded.email,
+                    password = excluded.password
                 """;
 
         try (Connection conn = DatabaseManager.getConnection();
@@ -38,6 +40,8 @@ public class UserRepository {
             ps.setString(2, user.getFullName());
             ps.setString(3, user.getPhoneNumber());
             ps.setString(4, user.getNationalId());
+            ps.setString(5, user.getEmail());
+            ps.setString(6, user.getPassword());
             ps.executeUpdate();
 
         } catch (SQLException e) {
@@ -59,12 +63,7 @@ public class UserRepository {
 
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
-                    return new User(
-                            rs.getString("id"),
-                            rs.getString("full_name"),
-                            rs.getString("phone_number"),
-                            rs.getString("national_id")
-                    );
+                    return mapUser(rs);
                 }
             }
 
@@ -75,8 +74,63 @@ public class UserRepository {
         return null;
     }
 
+    public User findByEmail(String email) {
+        if (email == null || email.trim().isEmpty()) {
+            return null;
+        }
+
+        String sql = "SELECT * FROM users WHERE email = ?";
+
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, email.trim());
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return mapUser(rs);
+                }
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to find user by email: " + e.getMessage(), e);
+        }
+
+        return null;
+    }
+
+    public User findByEmailAndPassword(String email, String password) {
+        if (email == null || email.trim().isEmpty() || password == null || password.trim().isEmpty()) {
+            return null;
+        }
+
+        String sql = "SELECT * FROM users WHERE email = ? AND password = ?";
+
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, email.trim());
+            ps.setString(2, password.trim());
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return mapUser(rs);
+                }
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to authenticate user: " + e.getMessage(), e);
+        }
+
+        return null;
+    }
+
     public boolean existsById(String id) {
         return findById(id) != null;
+    }
+
+    public boolean existsByEmail(String email) {
+        return findByEmail(email) != null;
     }
 
     public Collection<User> findAll() {
@@ -88,12 +142,7 @@ public class UserRepository {
              ResultSet rs = ps.executeQuery()) {
 
             while (rs.next()) {
-                users.add(new User(
-                        rs.getString("id"),
-                        rs.getString("full_name"),
-                        rs.getString("phone_number"),
-                        rs.getString("national_id")
-                ));
+                users.add(mapUser(rs));
             }
 
         } catch (SQLException e) {
@@ -101,5 +150,16 @@ public class UserRepository {
         }
 
         return users;
+    }
+
+    private User mapUser(ResultSet rs) throws SQLException {
+        return new User(
+                rs.getString("id"),
+                rs.getString("full_name"),
+                rs.getString("phone_number"),
+                rs.getString("national_id"),
+                rs.getString("email"),
+                rs.getString("password")
+        );
     }
 }

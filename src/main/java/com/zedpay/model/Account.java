@@ -21,21 +21,29 @@ public abstract class Account {
         this.ownerId = ownerId;
         this.accountType = accountType;
         this.transactionHistory = new ArrayList<>();
-        setBalance(balance);
+        this.balance = balance;
     }
 
     public void deposit(double amount) {
-        if (amount > 0) {
-            this.balance += amount;
+        if (amount <= 0) {
+            throw new IllegalArgumentException("Deposit amount must be greater than zero");
         }
+        this.balance += amount;
     }
 
     public abstract boolean withdraw(double amount);
 
     public abstract String generateStatement();
 
-    public void addTransactionHistory(String record) {
+    public void addTransaction(String record) {
+        if (transactionHistory == null) {
+            transactionHistory = new ArrayList<>();
+        }
         transactionHistory.add(record);
+    }
+
+    public void addTransactionHistory(String record) {
+        addTransaction(record);
     }
 
     public String getId() {
@@ -59,9 +67,7 @@ public abstract class Account {
     }
 
     public void setBalance(double balance) {
-        if (balance >= 0) {
-            this.balance = balance;
-        }
+        this.balance = balance;
     }
 
     public String getOwnerId() {

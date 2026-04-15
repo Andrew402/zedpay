@@ -16,7 +16,7 @@ public class UserService {
         this.accountRepository = accountRepository;
     }
 
-    public User registerUser(String fullName, String phoneNumber, String nationalId) {
+    public User registerUser(String fullName, String phoneNumber, String nationalId, String email, String password) {
         if (fullName == null || fullName.trim().isEmpty()) {
             throw new IllegalArgumentException("Full name is required");
         }
@@ -29,12 +29,26 @@ public class UserService {
             throw new IllegalArgumentException("National ID is required");
         }
 
+        if (email == null || email.trim().isEmpty()) {
+            throw new IllegalArgumentException("Email is required");
+        }
+
+        if (password == null || password.trim().isEmpty()) {
+            throw new IllegalArgumentException("Password is required");
+        }
+
+        if (userRepository.existsByEmail(email.trim())) {
+            throw new IllegalArgumentException("Email already exists");
+        }
+
         String userId = UUID.randomUUID().toString();
         User user = new User(
                 userId,
                 fullName.trim(),
                 phoneNumber.trim(),
-                nationalId.trim()
+                nationalId.trim(),
+                email.trim(),
+                password.trim()
         );
 
         String accountId = UUID.randomUUID().toString();
@@ -59,5 +73,17 @@ public class UserService {
         }
 
         return userRepository.findById(id);
+    }
+
+    public User loginUser(String email, String password) {
+        if (email == null || email.trim().isEmpty()) {
+            throw new IllegalArgumentException("Email is required");
+        }
+
+        if (password == null || password.trim().isEmpty()) {
+            throw new IllegalArgumentException("Password is required");
+        }
+
+        return userRepository.findByEmailAndPassword(email.trim(), password.trim());
     }
 }

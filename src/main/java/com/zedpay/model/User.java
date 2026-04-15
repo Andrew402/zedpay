@@ -8,24 +8,29 @@ public class User {
     private String fullName;
     private String phoneNumber;
     private String nationalId;
+    private String email;
+    private transient String password;
     private List<Account> accounts;
 
     public User() {
         this.accounts = new ArrayList<>();
     }
 
-    public User(String id, String fullName, String phoneNumber, String nationalId) {
+    public User(String id, String fullName, String phoneNumber, String nationalId, String email, String password) {
         this.id = id;
         this.fullName = fullName;
         this.phoneNumber = phoneNumber;
         this.nationalId = nationalId;
+        this.email = email;
+        this.password = password;
         this.accounts = new ArrayList<>();
     }
 
     public void addAccount(Account account) {
-        if (account != null) {
-            accounts.add(account);
+        if (accounts == null) {
+            accounts = new ArrayList<>();
         }
+        accounts.add(account);
     }
 
     public String getId() {
@@ -33,9 +38,7 @@ public class User {
     }
 
     public void setId(String id) {
-        if (id != null && !id.trim().isEmpty()) {
-            this.id = id.trim();
-        }
+        this.id = id;
     }
 
     public String getFullName() {
@@ -43,9 +46,7 @@ public class User {
     }
 
     public void setFullName(String fullName) {
-        if (fullName != null && !fullName.trim().isEmpty()) {
-            this.fullName = fullName.trim();
-        }
+        this.fullName = fullName;
     }
 
     public String getPhoneNumber() {
@@ -53,9 +54,7 @@ public class User {
     }
 
     public void setPhoneNumber(String phoneNumber) {
-        if (phoneNumber != null && !phoneNumber.trim().isEmpty()) {
-            this.phoneNumber = phoneNumber.trim();
-        }
+        this.phoneNumber = phoneNumber;
     }
 
     public String getNationalId() {
@@ -63,9 +62,23 @@ public class User {
     }
 
     public void setNationalId(String nationalId) {
-        if (nationalId != null && !nationalId.trim().isEmpty()) {
-            this.nationalId = nationalId.trim();
-        }
+        this.nationalId = nationalId;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
     }
 
     public List<Account> getAccounts() {
@@ -73,10 +86,6 @@ public class User {
     }
 
     public void setAccounts(List<Account> accounts) {
-        if (accounts != null) {
-            this.accounts = accounts;
-        } else {
-            this.accounts = new ArrayList<>();
-        }
+        this.accounts = accounts;
     }
 }

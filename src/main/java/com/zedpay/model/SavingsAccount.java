@@ -1,12 +1,13 @@
 package com.zedpay.model;
 
 public class SavingsAccount extends Account {
+    private static final double DEFAULT_MINIMUM_BALANCE = 100.0;
     private double minimumBalance;
 
     public SavingsAccount() {
         super();
         setAccountType(AccountType.SAVINGS);
-        this.minimumBalance = 0.0;
+        this.minimumBalance = DEFAULT_MINIMUM_BALANCE;
     }
 
     public SavingsAccount(String id, String accountNumber, double balance, String ownerId, double minimumBalance) {

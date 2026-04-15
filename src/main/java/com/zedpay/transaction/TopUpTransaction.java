@@ -17,6 +17,7 @@ public class TopUpTransaction implements Transaction {
         this.transactionId = UUID.randomUUID().toString();
         this.accountId = accountId;
         this.amount = amount;
+        this.fee = 0.0;
         this.timestamp = LocalDateTime.now();
         this.status = TransactionStatus.PENDING;
     }
@@ -42,7 +43,27 @@ public class TopUpTransaction implements Transaction {
         return transactionId;
     }
 
+    public String getAccountId() {
+        return accountId;
+    }
+
+    public double getAmount() {
+        return amount;
+    }
+
+    public double getFee() {
+        return fee;
+    }
+
+    public LocalDateTime getTimestamp() {
+        return timestamp;
+    }
+
     public TransactionStatus getStatus() {
         return status;
+    }
+
+    public void setStatus(TransactionStatus status) {
+        this.status = status;
     }
 }

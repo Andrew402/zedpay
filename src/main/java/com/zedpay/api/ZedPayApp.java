@@ -7,6 +7,7 @@ import com.zedpay.model.User;
 import com.zedpay.repository.AccountRepository;
 import com.zedpay.repository.UserRepository;
 import com.zedpay.service.AccountService;
+import com.zedpay.service.Ledger;
 import com.zedpay.service.TransactionService;
 import com.zedpay.service.UserService;
 import io.javalin.Javalin;
@@ -25,6 +26,7 @@ public class ZedPayApp {
         TransactionService transactionService = new TransactionService(accountRepository);
 
         Gson gson = new Gson();
+        Ledger ledger = Ledger.getInstance();
 
         Javalin app = Javalin.create(config -> {
             config.bundledPlugins.enableCors(cors -> {
@@ -62,6 +64,8 @@ public class ZedPayApp {
                 String fullName = body.get("fullName") == null ? null : body.get("fullName").toString().trim();
                 String phoneNumber = body.get("phoneNumber") == null ? null : body.get("phoneNumber").toString().trim();
                 String nationalId = body.get("nationalId") == null ? null : body.get("nationalId").toString().trim();
+                String email = body.get("email") == null ? null : body.get("email").toString().trim();
+                String password = body.get("password") == null ? null : body.get("password").toString().trim();
 
                 if (fullName == null || fullName.isEmpty()) {
                     ctx.status(400).json(Map.of("message", "Full name is required"));
@@ -78,13 +82,109 @@ public class ZedPayApp {
                     return;
                 }
 
-                User user = userService.registerUser(fullName, phoneNumber, nationalId);
-                ctx.status(201).json(user);
+                if (email == null || email.isEmpty()) {
+                    ctx.status(400).json(Map.of("message", "Email is required"));
+                    return;
+                }
+
+                if (password == null || password.isEmpty()) {
+                    ctx.status(400).json(Map.of("message", "Password is required"));
+                    return;
+                }
+
+                User user = userService.registerUser(fullName, phoneNumber, nationalId, email, password);
+
+                ctx.status(201).json(Map.of(
+                        "message", "User registered successfully",
+                        "user", user
+                ));
 
             } catch (IllegalArgumentException e) {
                 ctx.status(400).json(Map.of("message", e.getMessage()));
             } catch (Exception e) {
                 ctx.status(500).json(Map.of("message", "Failed to register user"));
+            }
+        });
+
+        app.post("/auth/login", ctx -> {
+            try {
+                Map<String, Object> body = gson.fromJson(ctx.body(), Map.class);
+
+                if (body == null) {
+                    ctx.status(400).json(Map.of("message", "Request body is required"));
+                    return;
+                }
+
+                String email = body.get("email") == null ? null : body.get("email").toString().trim();
+                String password = body.get("password") == null ? null : body.get("password").toString().trim();
+
+                if (email == null || email.isEmpty()) {
+                    ctx.status(400).json(Map.of("message", "Email is required"));
+                    return;
+                }
+
+                if (password == null || password.isEmpty()) {
+                    ctx.status(400).json(Map.of("message", "Password is required"));
+                    return;
+                }
+
+                User user = userService.loginUser(email, password);
+
+                if (user == null) {
+                    ctx.status(401).json(Map.of("message", "Invalid email or password"));
+                    return;
+                }
+
+                ctx.status(200).json(Map.of(
+                        "message", "Login successful",
+                        "user", user
+                ));
+
+            } catch (IllegalArgumentException e) {
+                ctx.status(400).json(Map.of("message", e.getMessage()));
+            } catch (Exception e) {
+                ctx.status(500).json(Map.of("message", "Failed to login"));
+            }
+        });
+
+        app.post("/users/login", ctx -> {
+            try {
+                Map<String, Object> body = gson.fromJson(ctx.body(), Map.class);
+
+                if (body == null) {
+                    ctx.status(400).json(Map.of("message", "Request body is required"));
+                    return;
+                }
+
+                String email = body.get("email") == null ? null : body.get("email").toString().trim();
+                String password = body.get("password") == null ? null : body.get("password").toString().trim();
+
+                if (email == null || email.isEmpty()) {
+                    ctx.status(400).json(Map.of("message", "Email is required"));
+                    return;
+                }
+
+                if (password == null || password.isEmpty()) {
+                    ctx.status(400).json(Map.of("message", "Password is required"));
+                    return;
+                }
+
+                User user = userService.loginUser(email, password);
+
+                if (user == null) {
+                    ctx.status(401).json(Map.of("message", "Invalid email or password"));
+                    return;
+                }
+
+                ctx.status(200).json(Map.of(
+                        "message", "Login successful",
+                        "user", user
+                ));
+
+            } catch (IllegalArgumentException e) {
+                ctx.status(400).json(Map.of("message", e.getMessage()));
+            } catch (Exception e) {
+                ctx.status(500).json(Map.of("message", "Failed to login"));
             }
         });
 
@@ -365,6 +465,36 @@ public class ZedPayApp {
                 ctx.status(400).json(Map.of("message", e.getMessage()));
             } catch (Exception e) {
                 ctx.status(500).json(Map.of("message", "Failed to fetch transaction history"));
+            }
+        });
+
+        app.get("/ledger", ctx -> {
+            try {
+                ctx.json(ledger.getAllEntries());
+            } catch (Exception e) {
+                ctx.status(500).json(Map.of("message", "Failed to fetch ledger entries"));
+            }
+        });
+
+        app.get("/ledger/summary", ctx -> {
+            try {
+                ctx.json(Map.of(
+                        "entryCount", ledger.getEntryCount(),
+                        "totalCredits", ledger.getTotalCredits(),
+                        "totalDebits", ledger.getTotalDebits(),
+                        "balanced", ledger.isBalanced()
+                ));
+            } catch (Exception e) {
+                ctx.status(500).json(Map.of("message", "Failed to fetch ledger summary"));
+            }
+        });
+
+        app.post("/ledger/clear", ctx -> {
+            try {
+                ledger.clear();
+                ctx.json(Map.of("message", "Ledger cleared successfully"));
+            } catch (Exception e) {
+                ctx.status(500).json(Map.of("message", "Failed to clear ledger"));
             }
         });
     }

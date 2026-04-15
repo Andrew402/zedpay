@@ -65,6 +65,51 @@ public class AccountRepository {
         }
     }
 
+    public void update(Account account) {
+        if (account == null) {
+            throw new IllegalArgumentException("Account cannot be null");
+        }
+
+        String sql = """
+                UPDATE accounts SET
+                    account_number = ?,
+                    balance = ?,
+                    owner_id = ?,
+                    account_type = ?,
+                    minimum_balance = ?,
+                    business_registration_id = ?
+                WHERE id = ?
+                """;
+
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, account.getAccountNumber());
+            ps.setDouble(2, account.getBalance());
+            ps.setString(3, account.getOwnerId());
+            ps.setString(4, account.getAccountType().name());
+
+            if (account instanceof SavingsAccount savingsAccount) {
+                ps.setDouble(5, savingsAccount.getMinimumBalance());
+            } else {
+                ps.setDouble(5, 0.0);
+            }
+
+            if (account instanceof MerchantAccount merchantAccount) {
+                ps.setString(6, merchantAccount.getBusinessRegistrationId());
+            } else {
+                ps.setNull(6, Types.VARCHAR);
+            }
+
+            ps.setString(7, account.getId());
+            ps.executeUpdate();
+            saveTransactionHistory(conn, account);
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to update account: " + e.getMessage(), e);
+        }
+    }
+
     public Account findById(String id) {
         if (id == null || id.trim().isEmpty()) {
             return null;
@@ -203,7 +248,7 @@ public class AccountRepository {
 
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    account.addTransactionHistory(rs.getString("record"));
+                    account.addTransaction(rs.getString("record")); // ✅ fixed: was addTransactionHistory()
                 }
             }
         }

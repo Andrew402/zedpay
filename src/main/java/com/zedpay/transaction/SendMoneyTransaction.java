@@ -19,6 +19,7 @@ public class SendMoneyTransaction implements Transaction {
         this.fromAccountId = fromAccountId;
         this.toAccountId = toAccountId;
         this.amount = amount;
+        this.fee = 0.0;
         this.timestamp = LocalDateTime.now();
         this.status = TransactionStatus.PENDING;
     }
@@ -44,7 +45,31 @@ public class SendMoneyTransaction implements Transaction {
         return transactionId;
     }
 
+    public String getFromAccountId() {
+        return fromAccountId;
+    }
+
+    public String getToAccountId() {
+        return toAccountId;
+    }
+
+    public double getAmount() {
+        return amount;
+    }
+
+    public double getFee() {
+        return fee;
+    }
+
+    public LocalDateTime getTimestamp() {
+        return timestamp;
+    }
+
     public TransactionStatus getStatus() {
         return status;
+    }
+
+    public void setStatus(TransactionStatus status) {
+        this.status = status;
     }
 }
