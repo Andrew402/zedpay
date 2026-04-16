@@ -2,6 +2,7 @@ package com.zedpay.model;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public abstract class Account {
     private String id;
@@ -9,7 +10,7 @@ public abstract class Account {
     private double balance;
     private String ownerId;
     private AccountType accountType;
-    private List<String> transactionHistory;
+    private List<Map<String, Object>> transactionHistory;
 
     public Account() {
         this.transactionHistory = new ArrayList<>();
@@ -35,14 +36,22 @@ public abstract class Account {
 
     public abstract String generateStatement();
 
-    public void addTransaction(String record) {
+    public void addTransaction(Map<String, Object> record) {
         if (transactionHistory == null) {
             transactionHistory = new ArrayList<>();
         }
         transactionHistory.add(record);
     }
 
-    public void addTransactionHistory(String record) {
+    // Keeps backward compatibility if any old code still passes plain strings
+    public void addTransaction(String record) {
+        if (transactionHistory == null) {
+            transactionHistory = new ArrayList<>();
+        }
+        transactionHistory.add(Map.of("record", record));
+    }
+
+    public void addTransactionHistory(Map<String, Object> record) {
         addTransaction(record);
     }
 
@@ -86,11 +95,11 @@ public abstract class Account {
         this.accountType = accountType;
     }
 
-    public List<String> getTransactionHistory() {
+    public List<Map<String, Object>> getTransactionHistory() {
         return transactionHistory;
     }
 
-    public void setTransactionHistory(List<String> transactionHistory) {
+    public void setTransactionHistory(List<Map<String, Object>> transactionHistory) {
         this.transactionHistory = transactionHistory;
     }
 }

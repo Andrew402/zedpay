@@ -1,5 +1,6 @@
 package com.zedpay.repository;
 
+import com.google.gson.Gson;
 import com.zedpay.database.DatabaseManager;
 import com.zedpay.model.Account;
 import com.zedpay.model.MerchantAccount;
@@ -10,8 +11,11 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 public class AccountRepository {
+
+    private final Gson gson = new Gson();
 
     public void save(Account account) {
         if (account == null) {
@@ -231,9 +235,9 @@ public class AccountRepository {
 
         String insertSql = "INSERT INTO transaction_history (account_id, record) VALUES (?, ?)";
         try (PreparedStatement insertPs = conn.prepareStatement(insertSql)) {
-            for (String record : account.getTransactionHistory()) {
+            for (Map<String, Object> record : account.getTransactionHistory()) {
                 insertPs.setString(1, account.getId());
-                insertPs.setString(2, record);
+                insertPs.setString(2, gson.toJson(record));
                 insertPs.addBatch();
             }
             insertPs.executeBatch();
@@ -248,7 +252,20 @@ public class AccountRepository {
 
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    account.addTransaction(rs.getString("record")); // ✅ fixed: was addTransactionHistory()
+                    String recordJson = rs.getString("record");
+
+                    try {
+                        @SuppressWarnings("unchecked")
+                        Map<String, Object> record = gson.fromJson(recordJson, Map.class);
+
+                        if (record != null) {
+                            account.addTransaction(record);
+                        } else {
+                            account.addTransaction(Map.of("record", recordJson));
+                        }
+                    } catch (Exception e) {
+                        account.addTransaction(Map.of("record", recordJson));
+                    }
                 }
             }
         }

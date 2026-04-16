@@ -5,6 +5,7 @@ import com.zedpay.model.User;
 import com.zedpay.repository.AccountRepository;
 import com.zedpay.repository.UserRepository;
 
+import java.util.ArrayList;
 import java.util.UUID;
 
 public class UserService {
@@ -72,7 +73,14 @@ public class UserService {
             throw new IllegalArgumentException("User ID is required");
         }
 
-        return userRepository.findById(id);
+        User user = userRepository.findById(id.trim());
+
+        if (user == null) {
+            return null;
+        }
+
+        user.setAccounts(new ArrayList<>(accountRepository.findByOwnerId(user.getId())));
+        return user;
     }
 
     public User loginUser(String email, String password) {
@@ -84,6 +92,13 @@ public class UserService {
             throw new IllegalArgumentException("Password is required");
         }
 
-        return userRepository.findByEmailAndPassword(email.trim(), password.trim());
+        User user = userRepository.findByEmailAndPassword(email.trim(), password.trim());
+
+        if (user == null) {
+            return null;
+        }
+
+        user.setAccounts(new ArrayList<>(accountRepository.findByOwnerId(user.getId())));
+        return user;
     }
 }
